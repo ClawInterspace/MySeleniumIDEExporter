@@ -1,1 +1,1 @@
-python Builder.py ./Material/ExportedCasePrototype/Basic.py ./Material/py-prototype-container.js ../Template/selenium-ide-template.js
+python Builder.py ./Material/ExportedCasePrototype/Basic.py ./Material/py-prototype-container.js ../Template/selenium-ide-template3.js

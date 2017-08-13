@@ -287,8 +287,203 @@ this.options = {
   rcHost: "localhost",
   rcPort: "4444",
   environment: "*chrome",
-  header: ${python_header},
-  footer: ${python_footer},
+  header: 
+	'# -*- coding: utf-8 -*-\n' + 
+	'from selenium import webdriver\n' + 
+	'from selenium.webdriver.common.by import By\n' + 
+	'from selenium.webdriver.common.keys import Keys\n' + 
+	'from selenium.webdriver.support.ui import Select\n' + 
+	'from selenium.common.exceptions import NoSuchElementException\n' + 
+	'from selenium.common.exceptions import NoAlertPresentException\n' + 
+	'from argparse import RawTextHelpFormatter\n' + 
+	'import unittest, time, re, inspect, os, os.path, json, argparse\n' + 
+	'\n' + 
+	'\n' + 
+	'TEST_SUITE_CLASS_NAME = "${className}"\n' + 
+	'\n' + 
+	'\n' + 
+	'class ${className}(unittest.TestCase):\n' + 
+	'    def __init__(self, driver, opts):\n' + 
+	'        super(${className}, self).__init__("${methodName}")\n' + 
+	'\n' + 
+	'        self.driver_name = driver\n' + 
+	'        self.profile = TestProfile(opts[\'profile\'], self.__class__.__name__ + \'_Profile.json\')\n' + 
+	'        self.wait_time = opts[\'wait_time\']\n' + 
+	'\n' + 
+	'    def setUp(self):\n' + 
+	'        self.driver = self._get_web_driver(self.driver_name)\n' + 
+	'        self.driver.implicitly_wait(30)\n' + 
+	'        self.base_url = self.profile.param("base_url", "${baseURL}")\n' + 
+	'        self.verificationErrors = []\n' + 
+	'        self.accept_next_alert = True\n' + 
+	'\n' + 
+	'    def tearDown(self):\n' + 
+	'        self.driver.save_screenshot(self._build_screenshot_name())\n' + 
+	'        self.driver.quit()\n' + 
+	'        if self._is_successful() and not self.profile.is_profile_specified():\n' + 
+	'            self.profile.save_default_profile()\n' + 
+	'\n' + 
+	'        self.assertEqual([], self.verificationErrors)\n' + 
+	'\n' + 
+	'    def ${methodName}(self):\n' + 
+	'        param = self.profile.param\n' + 
+	'        ${receiver} = self.driver\n' + 
+	'',
+  footer: 
+	'\n' + 
+	'    def is_element_present(self, how, what):\n' + 
+	'        try: self.driver.find_element(by=how, value=what)\n' + 
+	'        except NoSuchElementException as e: return False\n' + 
+	'        return True\n' + 
+	'\n' + 
+	'    def is_alert_present(self):\n' + 
+	'        try: self.driver.switch_to_alert()\n' + 
+	'        except NoAlertPresentException as e: return False\n' + 
+	'        return True\n' + 
+	'\n' + 
+	'    def close_alert_and_get_its_text(self):\n' + 
+	'        try:\n' + 
+	'            alert = self.driver.switch_to_alert()\n' + 
+	'            alert_text = alert.text\n' + 
+	'            if self.accept_next_alert:\n' + 
+	'                alert.accept()\n' + 
+	'            else:\n' + 
+	'                alert.dismiss()\n' + 
+	'            return alert_text\n' + 
+	'        finally: self.accept_next_alert = True\n' + 
+	'\n' + 
+	'    @staticmethod\n' + 
+	'    def _get_web_driver(driver_name):\n' + 
+	'        if driver_name == \'chrome\':\n' + 
+	'            return webdriver.Chrome()\n' + 
+	'        elif driver_name == \'firefox\':\n' + 
+	'            return webdriver.Firefox()\n' + 
+	'        elif driver_name == \'ie\':\n' + 
+	'            return webdriver.Ie()\n' + 
+	'        elif driver_name == \'edge\':\n' + 
+	'            return webdriver.Edge()\n' + 
+	'        elif driver_name == \'safari\':\n' + 
+	'            return webdriver.Safari()\n' + 
+	'        else:\n' + 
+	'            raise ValueError\n' + 
+	'\n' + 
+	'    def _is_successful(self):\n' + 
+	'        result = self._resultForDoCleanups\n' + 
+	'        return len(result.failures) == 0 and len(result.errors) == 0\n' + 
+	'\n' + 
+	'    def _build_screenshot_name(self):\n' + 
+	'        png_root = os.getcwd() + os.sep\n' + 
+	'        local_time = time.strftime(\'%Y%m%d%H%M%S\', time.localtime())\n' + 
+	'        screenshot_id = \'_\'.join((self.__class__.__name__,\n' + 
+	'                                  self.driver_name,\n' + 
+	'                                  self._get_profile_name(),\n' + 
+	'                                  local_time))\n' + 
+	'\n' + 
+	'        return png_root + screenshot_id + \'.png\'\n' + 
+	'\n' + 
+	'    def _get_profile_name(self):\n' + 
+	'        profile = self.profile\n' + 
+	'        fullpath = profile.profile_filename if profile.is_profile_specified() else profile.default_profile_filename\n' + 
+	'        return os.path.split(fullpath)[1]\n' + 
+	'\n' + 
+	'\n' + 
+	'class TestProfile:\n' + 
+	'    def __init__(self, profile_filename, default_profile_filename):\n' + 
+	'        self.profile_dict = {}\n' + 
+	'        self.profile_filename = profile_filename\n' + 
+	'\n' + 
+	'        if type(default_profile_filename) is not str:\n' + 
+	'            raise TypeError\n' + 
+	'        if len(default_profile_filename) == 0:\n' + 
+	'            raise ValueError\n' + 
+	'\n' + 
+	'        self.default_profile_filename = default_profile_filename\n' + 
+	'\n' + 
+	'        if self.is_profile_specified():\n' + 
+	'            self.load_profile()\n' + 
+	'\n' + 
+	'    def param(self, param, default_value):\n' + 
+	'        if not self.is_profile_specified():\n' + 
+	'            self.profile_dict[param] = default_value\n' + 
+	'        return self.profile_dict[param]\n' + 
+	'\n' + 
+	'    def is_profile_specified(self):\n' + 
+	'        return self.profile_filename is not None\n' + 
+	'\n' + 
+	'    @staticmethod\n' + 
+	'    def profile_exists_with(filename):\n' + 
+	'        return os.path.isfile(filename)\n' + 
+	'\n' + 
+	'    def profile_exists(self):\n' + 
+	'        return self.profile_exists_with(filename=self.profile_filename)\n' + 
+	'\n' + 
+	'    def save_profile_with(self, filename):\n' + 
+	'        with open(filename, \'w\') as profile:\n' + 
+	'            json.dump(self.profile_dict, profile)\n' + 
+	'\n' + 
+	'    def save_profile(self):\n' + 
+	'        self.save_profile_with(filename=self.profile_filename)\n' + 
+	'\n' + 
+	'    def save_default_profile(self):\n' + 
+	'        self.save_profile_with(filename=self.default_profile_filename)\n' + 
+	'\n' + 
+	'    def load_profile_with(self, filename):\n' + 
+	'        with open(filename) as profile:\n' + 
+	'            self.profile_dict = json.load(profile)\n' + 
+	'\n' + 
+	'    def load_profile(self):\n' + 
+	'        self.load_profile_with(filename=self.profile_filename)\n' + 
+	'\n' + 
+	'\n' + 
+	'if __name__ == "__main__":\n' + 
+	'\n' + 
+	'    parser = argparse.ArgumentParser(\n' + 
+	'        description=\'Python-Based Selenium Web Test Case for \' + TEST_SUITE_CLASS_NAME,\n' + 
+	'        formatter_class=RawTextHelpFormatter)\n' + 
+	'\n' + 
+	'    group = parser.add_argument_group(\'options\')\n' + 
+	'    group.add_argument(\'-p\', \'--profile\',\n' + 
+	'                       dest=\'profile\',\n' + 
+	'                       type=str,\n' + 
+	'                       nargs=\'+\',\n' + 
+	'                       help=\'\'\'determine file paths of test profiles;\n' + 
+	'a default profile will be generated after execution\n' + 
+	'if this option is not specified\'\'\')\n' + 
+	'\n' + 
+	'    group.add_argument(\'-d\', \'--driver\',\n' + 
+	'                       dest=\'web_driver\',\n' + 
+	'                       type=str,\n' + 
+	'                       required=True,\n' + 
+	'                       help=\'\'\'specify a webdriver you would like to test with,\n' + 
+	'including:\n' + 
+	' - chrome:  Google Chrome\n' + 
+	' - firefox: Mozilla Firefox\n' + 
+	' - ie:      Microsoft Internet Explorer\n' + 
+	' - edge:    Microsoft Edge (not tested yet)\n' + 
+	' - safari:  Apple Safari (not tested yet)\'\'\')\n' + 
+	'\n' + 
+	'    group.add_argument(\'-t\', \'--time-wait\',\n' + 
+	'                       dest=\'time_in_sec\',\n' + 
+	'                       type=float,\n' + 
+	'                       default=0,\n' + 
+	'                       help=\'\'\'determine the waiting time in seconds (decimal)\n' + 
+	'between two steps (default: 0)\'\'\')\n' + 
+	'\n' + 
+	'    args = parser.parse_args()\n' + 
+	'\n' + 
+	'    test_suite_class = eval(TEST_SUITE_CLASS_NAME)\n' + 
+	'    suite = unittest.TestSuite()\n' + 
+	'\n' + 
+	'    profile_list = args.profile if args.profile is not None else [None]\n' + 
+	'    for profile in profile_list:\n' + 
+	'        opts = {\n' + 
+	'            \'profile\': profile,\n' + 
+	'            \'wait_time\': args.time_in_sec\n' + 
+	'        }\n' + 
+	'        suite.addTest(test_suite_class(args.web_driver, opts))\n' + 
+	'\n' + 
+	'    unittest.TextTestRunner().run(suite)\n' + 
+	'',
   indent:  '4',
   initialIndents: '2',
   defaultExtension: "py"
@@ -456,7 +651,7 @@ WDAPI.Element.prototype.isSelected = function() {
 
 WDAPI.Element.prototype.sendKeys = function(text) {
   var key = retrieveIdOrName(this.ref);
-  return this.ref + ".send_keys(${param_getter}(\"" + key + "\", " + xlateArgument(text, 'args') + "))\n" + stepWait();
+  return this.ref + ".send_keys(param(\"" + key + "\", " + xlateArgument(text, 'args') + "))\n" + stepWait();
 };
 
 WDAPI.Element.prototype.submit = function() {
@@ -466,12 +661,12 @@ WDAPI.Element.prototype.submit = function() {
 WDAPI.Element.prototype.select = function(selectLocator) {
   var key = retrieveIdOrName(this.ref);
   if (selectLocator.type == 'index') {
-    return "Select(" + this.ref + ").select_by_index(${param_getter}(\"" + key + "\", " + selectLocator.string + "))\n" + stepWait();
+    return "Select(" + this.ref + ").select_by_index(param(\"" + key + "\", " + selectLocator.string + "))\n" + stepWait();
   }
   if (selectLocator.type == 'value') {
-    return "Select(" + this.ref + ").select_by_value(${param_getter}(\"" + key + "\", " + xlateArgument(selectLocator.string) + "))\n" + stepWait();
+    return "Select(" + this.ref + ").select_by_value(param(\"" + key + "\", " + xlateArgument(selectLocator.string) + "))\n" + stepWait();
   }
-  return "Select(" + this.ref + ").select_by_visible_text(${param_getter}(\"" + key + "\", " + xlateArgument(selectLocator.string) + "))\n" + stepWait();
+  return "Select(" + this.ref + ").select_by_visible_text(param(\"" + key + "\", " + xlateArgument(selectLocator.string) + "))\n" + stepWait();
 };
 
 WDAPI.ElementList = function(ref) {
@@ -503,7 +698,7 @@ WDAPI.Utils.isAlertPresent = function() {
 };
 
 function stepWait() {
-  return "time.sleep(${pause_sec})";
+  return "time.sleep(self.wait_time)";
 }
 
 function takeScreenshot() {
